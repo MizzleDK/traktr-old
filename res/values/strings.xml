@@ -7,5 +7,7 @@
     <string name="register">Create account</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
+    <string name="signing_in">Signing in…</string>
+    <string name="traktSubtitle">Track what you\'re watching. Discover new shows &amp; movies.</string>
 
 </resources>

@@ -9,10 +9,20 @@
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
         android:text="@string/loginTrakt"
         android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/accent"
         android:textSize="32sp" />
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:gravity="center_horizontal"
+        android:text="@string/traktSubtitle"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textStyle="italic" />
 
     <ImageView
         android:id="@+id/logo"
@@ -39,6 +49,7 @@
         android:layout_marginTop="8dp"
         android:ems="10"
         android:hint="@string/password"
+        android:inputType="textPassword"
         android:maxWidth="320dp"
         android:minWidth="320dp" />
 
