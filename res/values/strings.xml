@@ -2,4 +2,10 @@
 
     <string name="app_name">traktr</string>
 
+    <string name="loginTrakt">Sign in to Trakt</string>
+    <string name="login">Sign in</string>
+    <string name="register">Create account</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+
 </resources>
