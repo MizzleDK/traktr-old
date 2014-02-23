@@ -3,8 +3,9 @@ package com.miz.traktr.util;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
@@ -17,6 +18,8 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
 
 /**
@@ -29,27 +32,41 @@ import android.preference.PreferenceManager;
 public class Helper {
 
 	// Account preferences
-	public static final String PREF_HAS_ACCOUNT = "hasAccount";
 	public static final String PREF_ACCOUNT_USERNAME = "accountUsername";
 	public static final String PREF_ACCOUNT_PASS_SHA1 = "accountPassSHA1";
 	public static final String PREF_ACCOUNT_REALNAME = "accountRealname";
-	
+
 	// Trakt API key
-	public static final String TRAKT_API = "b85f6110fd2522022bc53614965415bf";
-	
+	public static final String TRAKT_API = "37e8c23aef817e0feb2c83a1a01e2f3953b5fb15";
+
 	/**
 	 * Determines if an account exists.
 	 * @param context Context used to get the default shared preferences.
 	 * @return True if an account exists, false if not.
 	 */
 	public static boolean hasAccount(Context context) {
-		return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREF_HAS_ACCOUNT, false);
+		return !PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_USERNAME, "").isEmpty() && 
+				!PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_PASS_SHA1, "").isEmpty();
 	}
-	
+
 	/**
-	 * Attempt to log in on Trakt.
+	 * Determines if the device is currently connected to a network
+	 * @param c - Context of the application
+	 * @return True if connected to a network, else false
+	 */
+	public static boolean isOnline(Context c) {
+		ConnectivityManager cm = (ConnectivityManager) c.getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo[] netInfo = cm.getAllNetworkInfo();
+		int count = netInfo.length;
+		for (int i = 0; i < count; i++)
+			if (netInfo[i] != null && netInfo[i].isConnected()) return true;
+		return false;
+	}
+
+	/**
+	 * Attempt to log in on Trakt. If the log in succeeds, the credentials will be stored.
 	 * @param username
-	 * @param password
+	 * @param password SHA-1 encoded password.
 	 * @return True if log in succeeded, false if not.
 	 */
 	public static boolean login(Context context, String username, String password) {
@@ -62,9 +79,9 @@ public class Helper {
 		try {
 			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
 			nameValuePairs.add(new BasicNameValuePair("username", username));
-			nameValuePairs.add(new BasicNameValuePair("password", SHA1(password)));
+			nameValuePairs.add(new BasicNameValuePair("password", password));
 			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-			
+
 			ResponseHandler<String> responseHandler = new BasicResponseHandler();
 			String html = httpclient.execute(httppost, responseHandler);
 
@@ -74,24 +91,22 @@ public class Helper {
 			success = status.equals("success");
 
 		} catch (Exception e) {
-			System.out.println(e);
 			success = false;
 		}
-		
+
 		if (success) {
 			Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
 			editor.putString(PREF_ACCOUNT_USERNAME, username);
-			editor.putString(PREF_ACCOUNT_PASS_SHA1, SHA1(password));
+			editor.putString(PREF_ACCOUNT_PASS_SHA1, password);
 			editor.commit();
 
 			httpclient = new DefaultHttpClient();
 			httppost = new HttpPost("http://api.trakt.tv/user/profile.json/" + TRAKT_API + "/" + username);
 
 			try {
-				// Add your data
 				List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
 				nameValuePairs.add(new BasicNameValuePair("username", username));
-				nameValuePairs.add(new BasicNameValuePair("password", SHA1(password)));
+				nameValuePairs.add(new BasicNameValuePair("password", password));
 				httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
 				ResponseHandler<String> responseHandler = new BasicResponseHandler();
@@ -99,21 +114,71 @@ public class Helper {
 
 				JSONObject jObject = new JSONObject(html);
 
-				String name = jObject.getString("full_name");
-				if (name.equals("null") || name.isEmpty())
-					name = "";
+				if (jObject.has("full_name")) {
+					String name = jObject.getString("full_name");
+					if (name.equals("null") || name.isEmpty())
+						name = "";
 
-				editor.putString(PREF_ACCOUNT_REALNAME, name);
+					editor.putString(PREF_ACCOUNT_REALNAME, name);
+				} else {
+					editor.putString(PREF_ACCOUNT_REALNAME, "");
+				}
 				editor.commit();
 
 			} catch (Exception e) {
+				System.out.println("ERROR: " + e);
 				success = false;
 			}
 		}
-		
+
 		return success;
 	}
-	
+
+	/**
+	 * Attempts to create an account given a user name, password and e-mail.
+	 * @param context
+	 * @param username
+	 * @param password SHA-1 encoded password.
+	 * @param email
+	 * @return True if successful, false otherwise.
+	 */
+	public static boolean createAccount(Context context, String username, String password, String email) {
+		boolean success = false;
+
+		// Let's first attempt to log in with the supplied details
+		HttpClient httpclient = new DefaultHttpClient();
+		HttpPost httppost = new HttpPost("http://api.trakt.tv/account/create/" + TRAKT_API);
+
+		try {
+			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(3);
+			nameValuePairs.add(new BasicNameValuePair("username", username));
+			nameValuePairs.add(new BasicNameValuePair("password", password));
+			nameValuePairs.add(new BasicNameValuePair("email", email));
+			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+			ResponseHandler<String> responseHandler = new BasicResponseHandler();
+			String html = httpclient.execute(httppost, responseHandler);
+
+			JSONObject jObject = new JSONObject(html);
+
+			String status = jObject.getString("status");
+			success = status.equals("success");
+
+		} catch (Exception e) {
+			success = false;
+		}
+		
+		if (success) {
+			Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+			editor.putString(PREF_ACCOUNT_USERNAME, username);
+			editor.putString(PREF_ACCOUNT_PASS_SHA1, password);
+			editor.putString(PREF_ACCOUNT_REALNAME, "");
+			editor.commit();
+		}
+
+		return success;
+	}
+
 	/**
 	 * Hash a String using SHA-1.
 	 * @param text
@@ -122,14 +187,14 @@ public class Helper {
 	public static String SHA1(String text) {
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA-1");
-			md.update(text.getBytes("iso-8859-1"), 0, text.length());
+			md.update(text.getBytes("utf-8"), 0, text.getBytes().length);
 			byte[] sha1hash = md.digest();
 			return convertToHex(sha1hash);
 		} catch (Exception e) {
 			return "";
 		}
 	}
-	
+
 	/**
 	 * Convert a String to hex representation.
 	 * @param data
@@ -147,5 +212,25 @@ public class Helper {
 			} while (two_halfs++ < 1);
 		}
 		return buf.toString();
+	}
+
+	/**
+	 * Determines if a given String is a valid user name.
+	 * @param username
+	 * @return
+	 */
+	public static boolean isValidUsername(String username) {
+		return username.length() >= 3 && username.length() <= 20;
+	}
+
+	/**
+	 * Determines if a given String is a valid e-mail.
+	 * @param email
+	 * @return
+	 */
+	public static boolean isValidEmail(String email) {
+		Pattern p = Pattern.compile(".+@.+\\.[a-z]+");
+		Matcher m = p.matcher(email);
+		return m.matches();
 	}
 }

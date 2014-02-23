@@ -9,5 +9,14 @@
     <string name="password">Password</string>
     <string name="signing_in">Signing in…</string>
     <string name="traktSubtitle">Track what you\'re watching. Discover new shows &amp; movies.</string>
+    <string name="login_failed">Sign in failed! Check your username or password.</string>
+    <string name="no_internet">No internet connection!</string>
+    <string name="enter_valid_username">You need to enter a valid username!</string>
+    <string name="enter_valid_password">You need to enter a valid password!</string>
+    <string name="email">E-mail</string>
+    <string name="confirm_email">Confirm e-mail</string>
+    <string name="creating_account_failed">%s is already a registered user name or the e-mail address is already registered!</string>
+    <string name="creating_account">Creating account…</string>
+    <string name="check_details">Please check the entered details!</string>
 
 </resources>
