@@ -1,0 +1,222 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <!--
+    CONTENT LAYOUT
+    I've set the overScrollMode to never to avoid a visual glitch when scrolling fast
+    due to the windowBackground being null for overdraw / performance improvements
+    -->
+
+    <ScrollView
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:overScrollMode="never" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" >
+
+                <com.miz.traktr.util.BackdropImageView
+                    android:id="@+id/backdrop"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/fanart_dark" />
+
+                <!-- The GridItemImageView is inside a FrameLayout due to a bug with marginBottom in RelativeLayout -->
+
+                <ImageView
+                    android:id="@+id/overlay"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_alignParentBottom="true"
+                    android:src="@drawable/overlay_bg" />
+
+                <FrameLayout
+                    android:id="@+id/frameLayout1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentLeft="true" >
+
+                    <com.miz.traktr.util.GridItemImageView
+                        android:id="@+id/cover"
+                        android:layout_width="@dimen/image_thumbnail_size"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginLeft="8dp"
+                        android:background="@drawable/border"
+                        android:baselineAlignBottom="true"
+                        android:scaleType="fitXY"
+                        android:src="@drawable/loading_image" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/titleContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_toRightOf="@+id/frameLayout1" >
+
+                    <TextView
+                        android:id="@+id/title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginLeft="8dp"
+                        android:layout_marginRight="8dp"
+                        android:ellipsize="end"
+                        android:maxLines="3"
+                        android:shadowColor="#000"
+                        android:shadowDx="1.0"
+                        android:shadowDy="1.0"
+                        android:shadowRadius="1.0"
+                        android:textAppearance="?android:attr/textAppearanceLarge"
+                        android:textColor="#fff"
+                        android:textSize="28sp" />
+                </FrameLayout>
+            </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/background"
+                android:orientation="vertical" >
+
+                <ImageView
+                    android:id="@+id/imageView1"
+                    android:layout_width="match_parent"
+                    android:layout_height="4dp"
+                    android:src="@drawable/reverse_overlay_bg" />
+
+                <TextView
+                    android:id="@+id/tagline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginTop="8dp"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="#fff"
+                    android:textSize="20sp"
+                    android:textStyle="italic" />
+
+                <TextView
+                    android:id="@+id/description"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginTop="8dp"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="#ddd" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:baselineAligned="false" >
+
+                    <TextView
+                        android:id="@+id/runtime"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:drawableLeft="@drawable/ic_action_clock"
+                        android:drawablePadding="8dp"
+                        android:focusable="false"
+                        android:gravity="center_vertical"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:textColor="#ddd" />
+
+                    <TextView
+                        android:id="@+id/rating"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.5"
+                        android:drawableLeft="@drawable/ic_action_star_10"
+                        android:drawablePadding="8dp"
+                        android:focusable="false"
+                        android:gravity="center_vertical"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:textColor="#ddd" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:baselineAligned="false" >
+
+                    <TextView
+                        android:id="@+id/released"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:drawableLeft="@drawable/ic_action_calendar_day"
+                        android:drawablePadding="8dp"
+                        android:focusable="false"
+                        android:gravity="center_vertical"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:textColor="#ddd" />
+
+                    <TextView
+                        android:id="@+id/certification"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.5"
+                        android:drawableLeft="@drawable/ic_action_flag"
+                        android:drawablePadding="8dp"
+                        android:focusable="false"
+                        android:gravity="center_vertical"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:textColor="#ddd" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/genres"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:drawableLeft="@drawable/ic_action_tags"
+                    android:drawablePadding="8dp"
+                    android:focusable="false"
+                    android:gravity="center_vertical"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="#ddd" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Loading layout -->
+
+    <FrameLayout
+        android:id="@+id/progressLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/background" >
+
+        <ProgressBar
+            android:id="@+id/progress"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
+    </FrameLayout>
+
+</FrameLayout>

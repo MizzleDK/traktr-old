@@ -2,5 +2,9 @@
 
     <!-- Application theme. -->
     <style name="AppTheme" parent="android:Theme.Holo.Light.DarkActionBar"></style>
+    
+    <style name="AppThemeNoBackground" parent="AppTheme">
+        <item name="android:windowBackground">@null</item>
+    </style>
 
 </resources>

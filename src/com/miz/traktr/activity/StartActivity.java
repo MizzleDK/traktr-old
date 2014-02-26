@@ -21,7 +21,7 @@ public class StartActivity extends Activity {
 		boolean hasAccount = Helper.hasAccount(this);
 		
 		// Create a launch Intent based on the account status
-		Intent launchIntent = new Intent(this, hasAccount ? Main.class : Login.class);		
+		Intent launchIntent = new Intent(this, hasAccount ? Main.class : Login.class);
 		startActivity(launchIntent);
 		
 		// Finish the invisible Activity now that it has done its job.

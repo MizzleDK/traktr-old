@@ -1,7 +1,15 @@
 <resources>
 
-    <string name="app_name">traktr</string>
+    <plurals name="hour">
+        <item quantity="one">hour</item>
+        <item quantity="other">hours</item>
+    </plurals>
+    <plurals name="minute">
+        <item quantity="one">minute</item>
+        <item quantity="other">minutes</item>
+    </plurals>
 
+    <string name="app_name">traktr</string>
     <string name="loginTrakt">Sign in to Trakt</string>
     <string name="login">Sign in</string>
     <string name="register">Create account</string>
@@ -18,5 +26,26 @@
     <string name="creating_account_failed">%s is already a registered user name or the e-mail address is already registered!</string>
     <string name="creating_account">Creating account…</string>
     <string name="check_details">Please check the entered details!</string>
+    <string name="trending">Trending content</string>
+    <string name="movies">Movies</string>
+    <string name="tv_shows">TV shows</string>
+    <string name="stringNA">N/A</string>
+    <string name="mark_as_watched">Mark as watched</string>
+    <string name="mark_as_unwatched">Mark as unwatched</string>
+    <string name="add_to_watchlist">Add to watchlist</string>
+    <string name="remove_from_watchlist">Remove from watchlist</string>
+    <string name="add_to_collection">Add to collection</string>
+    <string name="remove_from_collection">Remove from collection</string>
+    <string name="share">Share</string>
+    <string name="open_on_trakt">Open on Trakt</string>
+    <string name="error">Something went wrong!</string>
+    <string name="marked_movie_as_watched">Marked movie as watched!</string>
+    <string name="marked_movie_as_unwatched">Marked movie as unwatched!</string>
+    <string name="check_in">Check in</string>
+    <string name="checked_in">Checked in!</string>
+    <string name="added_to_watchlist">Added to watchlist!</string>
+    <string name="removed_from_watchlist">Removed from watchlist!</string>
+    <string name="added_to_collection">Added to collection!</string>
+    <string name="removed_from_collection">Removed from collection!</string>
 
 </resources>
