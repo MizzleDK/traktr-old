@@ -2,6 +2,7 @@
 <resources>
 
     <dimen name="image_thumbnail_size">100dp</dimen>
+    <dimen name="backdrop_thumbnail_width">150dp</dimen>
     <dimen name="image_thumbnail_spacing">5dp</dimen>
     <dimen name="image_thumbnail_height">147dp</dimen>
     <dimen name="spinner_title_size">18sp</dimen>

@@ -1,12 +1,10 @@
 package com.miz.traktr.fragment;
 
-import static com.miz.traktr.util.Helper.ALTERNATE;
-import static com.miz.traktr.util.Helper.MOVIES;
 import static com.miz.traktr.util.Helper.CONTENT_ID;
+import static com.miz.traktr.util.Helper.SEASON;
+import static com.miz.traktr.util.Helper.NUMBER;
+import static com.miz.traktr.util.Helper.JSON;
 import static com.miz.traktr.util.Helper.TITLE;
-import static com.miz.traktr.util.Helper.POSTER;
-import static com.miz.traktr.util.Helper.BACKDROP;
-import static com.miz.traktr.util.Helper.YEAR;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,45 +28,42 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.miz.traktr.R;
-import com.miz.traktr.activity.MovieDetails;
-import com.miz.traktr.activity.ShowDetails;
+import com.miz.traktr.activity.ShowEpisodeDetails;
 import com.miz.traktr.util.CoverItem;
-import com.miz.traktr.util.GridItem;
+import com.miz.traktr.util.GridEpisode;
 import com.miz.traktr.util.Helper;
 import com.squareup.picasso.Picasso;
 
-public class TrendingFragment extends Fragment {
+public class EpisodesFragment extends Fragment {
 
-	private static final String TYPE = "type";
-
-	private List<GridItem> mItems = new ArrayList<GridItem>();
-	private int mImageThumbSize, mImageThumbSpacing, mType;
+	private List<GridEpisode> mItems = new ArrayList<GridEpisode>();
+	private int mImageThumbSize, mImageThumbSpacing, mSeason;
 	private GridView mGridView;
 	private ImageAdapter mAdapter;
+	private String mShowId, mShowTitle, mJsonArray;
 
-	/**
-	 * Empty constructor as per the Fragment documentation
-	 */
-	public TrendingFragment() {}
+	public EpisodesFragment() {}
 
-	public static TrendingFragment newInstance(int type) { 
-		TrendingFragment pageFragment = new TrendingFragment();
+	public static EpisodesFragment newInstance(String showId, String showTitle, int season) { 
+		EpisodesFragment fragment = new EpisodesFragment();
 		Bundle bundle = new Bundle();
-		bundle.putInt(TYPE, type);
-		pageFragment.setArguments(bundle);
-		return pageFragment;
+		bundle.putString(CONTENT_ID, showId);
+		bundle.putString(TITLE, showTitle);
+		bundle.putInt(SEASON, season);
+		fragment.setArguments(bundle);
+		return fragment;
 	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
 
-		setRetainInstance(true);
-
-		mImageThumbSize = getResources().getDimensionPixelSize(R.dimen.image_thumbnail_size);
 		mImageThumbSpacing = getResources().getDimensionPixelSize(R.dimen.image_thumbnail_spacing);
+		mImageThumbSize = getResources().getDimensionPixelSize(R.dimen.backdrop_thumbnail_width);
 
-		mType = getArguments().getInt(TYPE);
+		mShowId = getArguments().getString(CONTENT_ID);
+		mShowTitle = getArguments().getString(TITLE);
+		mSeason = getArguments().getInt(SEASON);
 	}
 
 	@Override
@@ -90,6 +85,7 @@ public class TrendingFragment extends Fragment {
 
 		mGridView = (GridView) v.findViewById(R.id.gridView);		
 		mGridView.setEmptyView(v.findViewById(R.id.progress));
+		mGridView.setColumnWidth(mImageThumbSize);
 		mGridView.setAdapter(mAdapter);
 
 		// Calculate the total column width to set item heights by factor 1.5
@@ -109,23 +105,17 @@ public class TrendingFragment extends Fragment {
 		mGridView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-				// Create the details Intent depending on what was pressed
-				Intent detailsIntent = new Intent(getActivity(), mType == MOVIES ? MovieDetails.class : ShowDetails.class);
-				
-				// Put the content ID or alternate ID as an Intent extra, depending on which is available
-				detailsIntent.putExtra(CONTENT_ID, !mItems.get(arg2).getId().isEmpty() ? mItems.get(arg2).getId() : mItems.get(arg2).getAlternateId());
-				detailsIntent.putExtra(TITLE, mItems.get(arg2).getTitle());
-				detailsIntent.putExtra(POSTER, mItems.get(arg2).getPoster());
-				detailsIntent.putExtra(BACKDROP, mItems.get(arg2).getBackdrop());
-				detailsIntent.putExtra(YEAR, mItems.get(arg2).getYear());
-				detailsIntent.putExtra(ALTERNATE, mItems.get(arg2).getAlternateId());
-				
-				// Start the details view
-				startActivity(detailsIntent);
+				Intent details = new Intent(getActivity(), ShowEpisodeDetails.class);
+				details.putExtra(TITLE, mShowTitle);
+				details.putExtra(SEASON, mSeason);
+				details.putExtra(NUMBER, mItems.get(arg2).getNumber());
+				details.putExtra(JSON, mJsonArray);
+				details.putExtra(CONTENT_ID, mShowId);
+				startActivity(details);
 			}
 		});
 
-		new TrendingContent(getActivity(), mType).execute();
+		new SeasonDetails(getActivity(), mShowId, mSeason).execute();
 	}
 
 	private class ImageAdapter extends BaseAdapter {
@@ -170,20 +160,30 @@ public class TrendingFragment extends Fragment {
 			CoverItem holder;
 
 			if (convertView == null) {
-				convertView = inflater.inflate(R.layout.grid_item, container, false);
+				convertView = inflater.inflate(R.layout.grid_episode, container, false);
 				holder = new CoverItem();
 				holder.cover = (ImageView) convertView.findViewById(R.id.cover);
+				holder.watched = (ImageView) convertView.findViewById(R.id.watched);
 				holder.text = (TextView) convertView.findViewById(R.id.text);
 				holder.subtext = (TextView) convertView.findViewById(R.id.gridCoverSubtitle);				
 				convertView.setTag(holder);
 			} else {
 				holder = (CoverItem) convertView.getTag();
 			}
+			
+			if (mItems.get(position).hasWatched())
+				holder.watched.setVisibility(View.VISIBLE);
+			else
+				holder.watched.setVisibility(View.GONE);
 
-			holder.text.setText(mItems.get(position).getTitle());
-			holder.subtext.setText(mItems.get(position).getYear());
+			if (!mItems.get(position).getTitle().isEmpty())
+				holder.text.setText(mItems.get(position).getTitle());
+			else
+				holder.text.setText(R.string.unknown);
 
-			Picasso.with(mContext).load(mItems.get(position).getPoster()).into(holder);
+			holder.subtext.setText(String.format(getString(R.string.episode), mItems.get(position).getEpisode()));
+
+			Picasso.with(mContext).load(mItems.get(position).getImage()).into(holder);
 
 			return convertView;
 		}
@@ -197,32 +197,36 @@ public class TrendingFragment extends Fragment {
 		}
 	}
 
-	protected class TrendingContent extends AsyncTask<String, String, String> {
+	protected class SeasonDetails extends AsyncTask<String, String, String> {
 
 		private Context mContext;
-		private int mType;
+		private String mShowId;
+		private int mSeason;
 
-		public TrendingContent(Context context, int type) {
+		public SeasonDetails(Context context, String showId, int season) {
 			mContext = context;
-			mType = type;
+			mShowId = showId;
+			mSeason = season;
 		}
 
 		@Override
 		protected String doInBackground(String... params) {
 			try {
-				JSONArray jArray = Helper.getTrendingContent(mContext, mType);
+				JSONArray jArray = Helper.getSeason(mContext, mShowId, mSeason);
 
 				mItems.clear();
 				for (int i = 0; i < jArray.length(); i++) {
-					mItems.add(new GridItem(
+					mItems.add(new GridEpisode(
 							jArray.getJSONObject(i).getString("title"),
-							jArray.getJSONObject(i).getString("year"),
-							jArray.getJSONObject(i).getString("imdb_id"),
-							mType == MOVIES ? jArray.getJSONObject(i).getString("tmdb_id") : jArray.getJSONObject(i).getString("tvdb_id"),
-									Helper.convertCoverSize(jArray.getJSONObject(i).getJSONObject("images").getString("poster")),
-									Helper.convertBackdropSize(jArray.getJSONObject(i).getJSONObject("images").getString("fanart"))));
-				}				
-
+							jArray.getJSONObject(i).getInt("season"),
+							jArray.getJSONObject(i).getInt("episode"),
+							jArray.getJSONObject(i).getInt("number"),
+							jArray.getJSONObject(i).getBoolean("watched"),
+							jArray.getJSONObject(i).getJSONObject("images").getString("screen")));
+				}
+				
+				mJsonArray = jArray.toString();
+				
 			} catch (Exception ignored) {}
 
 			return null;

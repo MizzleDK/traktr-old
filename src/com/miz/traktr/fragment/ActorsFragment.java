@@ -1,12 +1,7 @@
 package com.miz.traktr.fragment;
 
-import static com.miz.traktr.util.Helper.ALTERNATE;
-import static com.miz.traktr.util.Helper.MOVIES;
 import static com.miz.traktr.util.Helper.CONTENT_ID;
-import static com.miz.traktr.util.Helper.TITLE;
-import static com.miz.traktr.util.Helper.POSTER;
-import static com.miz.traktr.util.Helper.BACKDROP;
-import static com.miz.traktr.util.Helper.YEAR;
+import static com.miz.traktr.util.Helper.TYPE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +10,7 @@ import org.json.JSONArray;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -30,18 +26,15 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.miz.traktr.R;
-import com.miz.traktr.activity.MovieDetails;
-import com.miz.traktr.activity.ShowDetails;
 import com.miz.traktr.util.CoverItem;
-import com.miz.traktr.util.GridItem;
+import com.miz.traktr.util.GridActor;
 import com.miz.traktr.util.Helper;
 import com.squareup.picasso.Picasso;
 
-public class TrendingFragment extends Fragment {
+public class ActorsFragment extends Fragment {
 
-	private static final String TYPE = "type";
-
-	private List<GridItem> mItems = new ArrayList<GridItem>();
+	private List<GridActor> mItems = new ArrayList<GridActor>();
+	private String mContentId;
 	private int mImageThumbSize, mImageThumbSpacing, mType;
 	private GridView mGridView;
 	private ImageAdapter mAdapter;
@@ -49,11 +42,12 @@ public class TrendingFragment extends Fragment {
 	/**
 	 * Empty constructor as per the Fragment documentation
 	 */
-	public TrendingFragment() {}
+	public ActorsFragment() {}
 
-	public static TrendingFragment newInstance(int type) { 
-		TrendingFragment pageFragment = new TrendingFragment();
+	public static ActorsFragment newInstance(String contentId, int type) { 
+		ActorsFragment pageFragment = new ActorsFragment();
 		Bundle bundle = new Bundle();
+		bundle.putString(CONTENT_ID, contentId);
 		bundle.putInt(TYPE, type);
 		pageFragment.setArguments(bundle);
 		return pageFragment;
@@ -68,6 +62,7 @@ public class TrendingFragment extends Fragment {
 		mImageThumbSize = getResources().getDimensionPixelSize(R.dimen.image_thumbnail_size);
 		mImageThumbSpacing = getResources().getDimensionPixelSize(R.dimen.image_thumbnail_spacing);
 
+		mContentId = getArguments().getString(CONTENT_ID);
 		mType = getArguments().getInt(TYPE);
 	}
 
@@ -85,6 +80,8 @@ public class TrendingFragment extends Fragment {
 
 	public void onViewCreated(View v, Bundle savedInstanceState) {
 		super.onViewCreated(v, savedInstanceState);
+
+		v.findViewById(R.id.root_layout).setBackgroundResource(R.color.light_background);
 
 		mAdapter = new ImageAdapter(getActivity());
 
@@ -109,23 +106,13 @@ public class TrendingFragment extends Fragment {
 		mGridView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-				// Create the details Intent depending on what was pressed
-				Intent detailsIntent = new Intent(getActivity(), mType == MOVIES ? MovieDetails.class : ShowDetails.class);
-				
-				// Put the content ID or alternate ID as an Intent extra, depending on which is available
-				detailsIntent.putExtra(CONTENT_ID, !mItems.get(arg2).getId().isEmpty() ? mItems.get(arg2).getId() : mItems.get(arg2).getAlternateId());
-				detailsIntent.putExtra(TITLE, mItems.get(arg2).getTitle());
-				detailsIntent.putExtra(POSTER, mItems.get(arg2).getPoster());
-				detailsIntent.putExtra(BACKDROP, mItems.get(arg2).getBackdrop());
-				detailsIntent.putExtra(YEAR, mItems.get(arg2).getYear());
-				detailsIntent.putExtra(ALTERNATE, mItems.get(arg2).getAlternateId());
-				
-				// Start the details view
-				startActivity(detailsIntent);
+				Intent i = new Intent(Intent.ACTION_VIEW);
+				i.setData(Uri.parse("http://www.imdb.com/find?s=nm&q=" + mItems.get(arg2).getName().replace(" ", "+")));
+				startActivity(i);
 			}
 		});
 
-		new TrendingContent(getActivity(), mType).execute();
+		new ActorSearch(mContentId, mType).execute();
 	}
 
 	private class ImageAdapter extends BaseAdapter {
@@ -180,10 +167,20 @@ public class TrendingFragment extends Fragment {
 				holder = (CoverItem) convertView.getTag();
 			}
 
-			holder.text.setText(mItems.get(position).getTitle());
-			holder.subtext.setText(mItems.get(position).getYear());
+			if (!mItems.get(position).getName().equals("null"))
+				holder.text.setText(mItems.get(position).getName());
+			else
+				holder.text.setText(R.string.unknown);
 
-			Picasso.with(mContext).load(mItems.get(position).getPoster()).into(holder);
+			if (!mItems.get(position).getCharacter().equals("null"))
+				holder.subtext.setText(mItems.get(position).getCharacter());
+			else
+				holder.subtext.setText(R.string.unknown);
+
+			if (!mItems.get(position).getPoster().contains("avatar-large"))
+				Picasso.with(mContext).load(mItems.get(position).getPoster()).into(holder);
+			else
+				Picasso.with(mContext).load(R.drawable.no_actor).into(holder);
 
 			return convertView;
 		}
@@ -197,30 +194,27 @@ public class TrendingFragment extends Fragment {
 		}
 	}
 
-	protected class TrendingContent extends AsyncTask<String, String, String> {
+	protected class ActorSearch extends AsyncTask<String, String, String> {
 
-		private Context mContext;
+		private String mContentId;
 		private int mType;
 
-		public TrendingContent(Context context, int type) {
-			mContext = context;
+		public ActorSearch(String contentId, int type) {
+			mContentId = contentId;
 			mType = type;
 		}
 
 		@Override
 		protected String doInBackground(String... params) {
 			try {
-				JSONArray jArray = Helper.getTrendingContent(mContext, mType);
+				JSONArray jArray = Helper.getActors(mContentId, mType);
 
 				mItems.clear();
 				for (int i = 0; i < jArray.length(); i++) {
-					mItems.add(new GridItem(
-							jArray.getJSONObject(i).getString("title"),
-							jArray.getJSONObject(i).getString("year"),
-							jArray.getJSONObject(i).getString("imdb_id"),
-							mType == MOVIES ? jArray.getJSONObject(i).getString("tmdb_id") : jArray.getJSONObject(i).getString("tvdb_id"),
-									Helper.convertCoverSize(jArray.getJSONObject(i).getJSONObject("images").getString("poster")),
-									Helper.convertBackdropSize(jArray.getJSONObject(i).getJSONObject("images").getString("fanart"))));
+					mItems.add(new GridActor(
+							jArray.getJSONObject(i).getString("name"),
+							jArray.getJSONObject(i).getString("character"),
+							jArray.getJSONObject(i).getJSONObject("images").getString("headshot")));
 				}				
 
 			} catch (Exception ignored) {}

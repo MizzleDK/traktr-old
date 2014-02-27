@@ -12,7 +12,6 @@
         android:id="@+id/content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
         android:overScrollMode="never" >
 
         <LinearLayout
@@ -31,8 +30,6 @@
                     android:scaleType="centerCrop"
                     android:src="@drawable/fanart_dark" />
 
-                <!-- The GridItemImageView is inside a FrameLayout due to a bug with marginBottom in RelativeLayout -->
-
                 <ImageView
                     android:id="@+id/overlay"
                     android:layout_width="match_parent"
@@ -40,40 +37,23 @@
                     android:layout_alignParentBottom="true"
                     android:src="@drawable/overlay_bg" />
 
-                <FrameLayout
-                    android:id="@+id/frameLayout1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentBottom="true"
-                    android:layout_alignParentLeft="true" >
-
-                    <com.miz.traktr.util.GridItemImageView
-                        android:id="@+id/cover"
-                        android:layout_width="@dimen/image_thumbnail_size"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:layout_marginLeft="8dp"
-                        android:background="@drawable/border"
-                        android:baselineAlignBottom="true"
-                        android:scaleType="fitXY"
-                        android:src="@drawable/loading_image" />
-                </FrameLayout>
+                <!-- The TextView is inside a FrameLayout due to a bug with marginBottom in RelativeLayout -->
 
                 <FrameLayout
                     android:id="@+id/titleContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentBottom="true"
-                    android:layout_alignParentRight="true"
-                    android:layout_toRightOf="@+id/frameLayout1" >
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentRight="true" >
 
                     <TextView
                         android:id="@+id/title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"
-                        android:layout_marginLeft="8dp"
-                        android:layout_marginRight="8dp"
+                        android:layout_marginLeft="16dp"
+                        android:layout_marginRight="16dp"
                         android:ellipsize="end"
                         android:maxLines="3"
                         android:shadowColor="#000"
@@ -89,7 +69,6 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/background"
                 android:orientation="vertical" >
 
                 <ImageView
@@ -97,18 +76,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="4dp"
                     android:src="@drawable/reverse_overlay_bg" />
-
-                <TextView
-                    android:id="@+id/tagline"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginRight="16dp"
-                    android:layout_marginTop="8dp"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textColor="#fff"
-                    android:textSize="20sp"
-                    android:textStyle="italic" />
 
                 <TextView
                     android:id="@+id/description"
@@ -120,39 +87,6 @@
                     android:layout_marginTop="8dp"
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     android:textColor="#ddd" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginRight="16dp"
-                    android:baselineAligned="false" >
-
-                    <TextView
-                        android:id="@+id/runtime"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:drawableLeft="@drawable/ic_action_clock"
-                        android:drawablePadding="8dp"
-                        android:focusable="false"
-                        android:gravity="center_vertical"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:textColor="#ddd" />
-
-                    <TextView
-                        android:id="@+id/rating"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="0.5"
-                        android:drawableLeft="@drawable/ic_action_star_10"
-                        android:drawablePadding="8dp"
-                        android:focusable="false"
-                        android:gravity="center_vertical"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:textColor="#ddd" />
-                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -175,31 +109,17 @@
                         android:textColor="#ddd" />
 
                     <TextView
-                        android:id="@+id/certification"
+                        android:id="@+id/rating"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="0.5"
-                        android:drawableLeft="@drawable/ic_action_flag"
+                        android:drawableLeft="@drawable/ic_action_star_10"
                         android:drawablePadding="8dp"
                         android:focusable="false"
                         android:gravity="center_vertical"
                         android:textAppearance="?android:attr/textAppearanceMedium"
                         android:textColor="#ddd" />
                 </LinearLayout>
-
-                <TextView
-                    android:id="@+id/genres"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginRight="16dp"
-                    android:drawableLeft="@drawable/ic_action_tags"
-                    android:drawablePadding="8dp"
-                    android:focusable="false"
-                    android:gravity="center_vertical"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textColor="#ddd" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

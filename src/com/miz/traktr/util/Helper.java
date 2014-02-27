@@ -40,8 +40,13 @@ public class Helper {
 	public static final String BACKDROP = "backdrop";
 	public static final String YEAR = "year";
 	public static final String INVALID = "invalid"; // Used as a placeholder for empty image URL's
-	public static final String RETAINED = "retained";
-
+	public static final String TYPE = "type";
+	public static final String SEASON = "season";
+	public static final String NUMBER = "number";
+	public static final String JSON = "json";
+	public static final String TVDB_ID = "tvdbId";
+	public static final String ALTERNATE = "alternate";
+	
 	// Using integers over enumerations as they use less memory
 	public static final int MOVIES = 0, TV_SHOWS = 1;
 	public static final int WATCHED = 1000, CHECK_IN = 1001, WATCHLIST = 1002, COLLECTION = 1003;
@@ -141,7 +146,6 @@ public class Helper {
 				editor.commit();
 
 			} catch (Exception e) {
-				System.out.println("ERROR: " + e);
 				success = false;
 			}
 		}
@@ -284,14 +288,14 @@ public class Helper {
 			movie.setRatingsVotes(ratings.getInt("votes"));
 			movie.setRatingsLoved(ratings.getInt("loved"));
 			movie.setRatingsHated(ratings.getInt("hated"));
-			
+
 			// User specific data
 			movie.setHasWatched(jsonObject.getBoolean("watched"));
 			movie.setRating(jsonObject.getString("rating"));
 			movie.setAdvancedRating(jsonObject.getInt("rating_advanced"));
 			movie.setInWatchlist(jsonObject.getBoolean("in_watchlist"));
 			movie.setInCollection(jsonObject.getBoolean("in_collection"));
-			
+
 			// The movie data has been loaded :-)
 			movie.setHasLoaded(true);
 
@@ -299,7 +303,7 @@ public class Helper {
 
 		return movie;
 	}
-	
+
 	/**
 	 * Sets the movie watched status for a list of movies.
 	 * @param context
@@ -313,12 +317,12 @@ public class Helper {
 
 		HttpClient httpclient = new DefaultHttpClient();	
 		HttpPost httppost = null;
-		
+
 		if (hasWatched)
 			httppost = new HttpPost("http://api.trakt.tv/movie/seen/" + TRAKT_API);
 		else
 			httppost = new HttpPost("http://api.trakt.tv/movie/unseen/" + TRAKT_API);
-		
+
 		httppost.setHeader("Accept", "application/json");
 
 		try {
@@ -347,6 +351,56 @@ public class Helper {
 
 		return false;
 	}
+	
+	/**
+	 * Sets the watched status for a list of episodes.
+	 * @param context
+	 * @param episodes
+	 * @param hasWatched
+	 * @return True if succeeded, false otherwise.
+	 */
+	public static boolean setEpisodeWatchedStatus(Context context, List<TraktEpisode> episodes, boolean hasWatched) {
+		if (episodes.size() == 0)
+			return false;
+
+		HttpClient httpclient = new DefaultHttpClient();	
+		HttpPost httppost = null;
+
+		if (hasWatched)
+			httppost = new HttpPost("http://api.trakt.tv/show/episode/seen/" + TRAKT_API);
+		else
+			httppost = new HttpPost("http://api.trakt.tv/show/episode/unseen/" + TRAKT_API);
+
+		httppost.setHeader("Accept", "application/json");
+
+		try {
+			JSONObject json = new JSONObject();
+			json.put("username", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_USERNAME, ""));
+			json.put("password", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_PASS_SHA1, ""));
+			json.put("imdb_id", episodes.get(0).getShowId());
+			json.put("tvdb_id", episodes.get(0).getShowId());
+
+			JSONArray array = new JSONArray();
+			int count = episodes.size();
+			for (int i = 0; i < count; i++) {
+				JSONObject jsonShow = new JSONObject();
+				jsonShow.put("season", episodes.get(i).getSeason());
+				jsonShow.put("episode", episodes.get(i).getEpisode());
+				array.put(jsonShow);
+			}
+			json.put("episodes", array);
+
+			httppost.setEntity(new StringEntity(json.toString()));
+			ResponseHandler<String> responseHandler = new BasicResponseHandler();
+			httpclient.execute(httppost, responseHandler);
+
+			return true;
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+
+		return false;
+	}
 
 	/**
 	 * Movie check in on Trakt
@@ -354,8 +408,8 @@ public class Helper {
 	 * @param c
 	 * @return True if succeeded, false otherwise.
 	 */
-	public static boolean checkInMovieTrakt(Context context, TraktMovie movie) {
-		
+	public static boolean checkInMovie(Context context, TraktMovie movie) {
+
 		// Cancel any previously current check in
 		HttpClient httpclient = new DefaultHttpClient();	
 		HttpPost httppost = new HttpPost("http://api.trakt.tv/movie/cancelcheckin/" + TRAKT_API);
@@ -363,10 +417,10 @@ public class Helper {
 		httppost.setHeader("Content-type", "application/json");
 
 		try {
-			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
-			nameValuePairs.add(new BasicNameValuePair("username", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_USERNAME, "")));
-			nameValuePairs.add(new BasicNameValuePair("password", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_PASS_SHA1, "")));
-			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+			JSONObject json = new JSONObject();
+			json.put("username", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_USERNAME, ""));
+			json.put("password", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_PASS_SHA1, ""));
+			httppost.setEntity(new StringEntity(json.toString()));
 
 			ResponseHandler<String> responseHandler = new BasicResponseHandler();
 			httpclient.execute(httppost, responseHandler);
@@ -396,6 +450,57 @@ public class Helper {
 	}
 	
 	/**
+	 * TV show episode check in on Trakt
+	 * @return True if succeeded, false otherwise.
+	 */
+	public static boolean checkInEpisode(Context context, TraktEpisode episode) {
+
+		// Cancel any previously current check in
+		HttpClient httpclient = new DefaultHttpClient();	
+		HttpPost httppost = new HttpPost("http://api.trakt.tv/show/cancelcheckin/" + TRAKT_API);
+		httppost.setHeader("Content-type", "application/json");
+
+		try {
+			JSONObject json = new JSONObject();
+			json.put("username", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_USERNAME, ""));
+			json.put("password", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_PASS_SHA1, ""));
+			httppost.setEntity(new StringEntity(json.toString()));
+
+			ResponseHandler<String> responseHandler = new BasicResponseHandler();
+			httpclient.execute(httppost, responseHandler);
+
+		} catch (Exception e) {}
+
+		// Check in with the episode
+		httppost = new HttpPost("http://api.trakt.tv/show/checkin/" + TRAKT_API);
+
+		try {
+			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(10);
+			nameValuePairs.add(new BasicNameValuePair("username", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_USERNAME, "")));
+			nameValuePairs.add(new BasicNameValuePair("password", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_PASS_SHA1, "")));
+			nameValuePairs.add(new BasicNameValuePair("tvdb_id", String.valueOf(episode.getShowTVDId())));
+			nameValuePairs.add(new BasicNameValuePair("title", ""));
+			nameValuePairs.add(new BasicNameValuePair("year", ""));
+			nameValuePairs.add(new BasicNameValuePair("season", String.valueOf(episode.getSeason())));
+			nameValuePairs.add(new BasicNameValuePair("episode", String.valueOf(episode.getEpisode())));
+			nameValuePairs.add(new BasicNameValuePair("episode_tvdb_id", String.valueOf(episode.getId())));
+			
+			// Used to help debugging on Trakt
+			String debuggin = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
+			nameValuePairs.add(new BasicNameValuePair("app_version", debuggin));
+			nameValuePairs.add(new BasicNameValuePair("episode", debuggin));
+			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+			ResponseHandler<String> responseHandler = new BasicResponseHandler();
+			httpclient.execute(httppost, responseHandler);
+
+			return true;
+		} catch (Exception e) {}
+
+		return false;
+	}
+
+	/**
 	 * Add or remove a list of movies from the watchlist on Trakt
 	 * @param movies
 	 * @param c
@@ -404,15 +509,15 @@ public class Helper {
 	public static boolean movieWatchlist(Context context, List<TraktMovie> movies, boolean toWatch) {
 		if (movies.size() == 0)
 			return false;
-		
+
 		HttpClient httpclient = new DefaultHttpClient();	
 		HttpPost httppost = null;
-		
+
 		if (toWatch)
 			httppost = new HttpPost("http://api.trakt.tv/movie/watchlist/" + TRAKT_API);
 		else
 			httppost = new HttpPost("http://api.trakt.tv/movie/unwatchlist/" + TRAKT_API);
-		
+
 		httppost.setHeader("Accept", "application/json");
 
 		try {
@@ -443,6 +548,97 @@ public class Helper {
 	}
 	
 	/**
+	 * Add or remove a list of TV shows from the watchlist on Trakt
+	 * @param shows
+	 * @param c
+	 * @return True if succeeded, false otherwise.
+	 */
+	public static boolean tvShowWatchlist(Context context, List<TraktShow> shows, boolean toWatch) {
+		if (shows.size() == 0)
+			return false;
+
+		HttpClient httpclient = new DefaultHttpClient();	
+		HttpPost httppost = null;
+
+		if (toWatch)
+			httppost = new HttpPost("http://api.trakt.tv/show/watchlist/" + TRAKT_API);
+		else
+			httppost = new HttpPost("http://api.trakt.tv/show/unwatchlist/" + TRAKT_API);
+
+		httppost.setHeader("Accept", "application/json");
+
+		try {
+			JSONObject json = new JSONObject();
+			json.put("username", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_USERNAME, ""));
+			json.put("password", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_PASS_SHA1, ""));
+
+			JSONArray array = new JSONArray();
+			int count = shows.size();
+			for (int i = 0; i < count; i++) {
+				JSONObject jsonShow = new JSONObject();
+				jsonShow.put("tvdb_id", shows.get(i).getTVDbId());
+				jsonShow.put("year", shows.get(i).getYear());
+				jsonShow.put("title", shows.get(i).getTitle());
+				array.put(jsonShow);
+			}
+			json.put("shows", array);
+
+			httppost.setEntity(new StringEntity(json.toString()));
+			ResponseHandler<String> responseHandler = new BasicResponseHandler();
+			httpclient.execute(httppost, responseHandler);
+
+			return true;
+		} catch (Exception e) {}
+
+		return false;
+	}
+	
+	/**
+	 * Add or remove a list of TV show episodes from the watchlist on Trakt
+	 * @return True if succeeded, false otherwise.
+	 */
+	public static boolean episodeWatchlist(Context context, List<TraktEpisode> episodes, boolean toWatch) {
+		if (episodes.size() == 0)
+			return false;
+
+		HttpClient httpclient = new DefaultHttpClient();	
+		HttpPost httppost = null;
+
+		if (toWatch)
+			httppost = new HttpPost("http://api.trakt.tv/show/episode/watchlist/" + TRAKT_API);
+		else
+			httppost = new HttpPost("http://api.trakt.tv/show/episode/unwatchlist/" + TRAKT_API);
+
+		httppost.setHeader("Accept", "application/json");
+
+		try {
+			JSONObject json = new JSONObject();
+			json.put("username", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_USERNAME, ""));
+			json.put("password", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_PASS_SHA1, ""));
+			json.put("imdb_id", episodes.get(0).getShowId());
+			json.put("tvdb_id", episodes.get(0).getShowId());
+
+			JSONArray array = new JSONArray();
+			int count = episodes.size();
+			for (int i = 0; i < count; i++) {
+				JSONObject jsonShow = new JSONObject();
+				jsonShow.put("season", episodes.get(i).getSeason());
+				jsonShow.put("episode", episodes.get(i).getEpisode());
+				array.put(jsonShow);
+			}
+			json.put("episodes", array);
+
+			httppost.setEntity(new StringEntity(json.toString()));
+			ResponseHandler<String> responseHandler = new BasicResponseHandler();
+			httpclient.execute(httppost, responseHandler);
+
+			return true;
+		} catch (Exception e) {}
+
+		return false;
+	}
+
+	/**
 	 * Add or remove a list of movies to / from the Trakt movie collection
 	 * @param movies
 	 * @param c
@@ -451,15 +647,15 @@ public class Helper {
 	public static boolean setMovieCollection(Context context, List<TraktMovie> movies, boolean addToCollection) {
 		if (movies.size() == 0)
 			return false;
-		
+
 		HttpClient httpclient = new DefaultHttpClient();	
 		HttpPost httppost = null;
-		
+
 		if (addToCollection)
 			httppost = new HttpPost("http://api.trakt.tv/movie/library/" + TRAKT_API);
 		else
 			httppost = new HttpPost("http://api.trakt.tv/movie/unlibrary/" + TRAKT_API);
-		
+
 		httppost.setHeader("Accept", "application/json");
 
 		try {
@@ -488,7 +684,203 @@ public class Helper {
 
 		return false;
 	}
+
+	/**
+	 * Add or remove a list of episodes to / from the Trakt episode collection
+	 * @return True if succeeded, false otherwise.
+	 */
+	public static boolean setEpisodeCollection(Context context, List<TraktEpisode> episodes, boolean addToCollection) {
+		if (episodes.size() == 0)
+			return false;
+
+		HttpClient httpclient = new DefaultHttpClient();	
+		HttpPost httppost = null;
+
+		if (addToCollection)
+			httppost = new HttpPost("http://api.trakt.tv/show/episode/library/" + TRAKT_API);
+		else
+			httppost = new HttpPost("http://api.trakt.tv/show/episode/unlibrary/" + TRAKT_API);
+
+		httppost.setHeader("Accept", "application/json");
+
+		try {
+			JSONObject json = new JSONObject();
+			json.put("username", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_USERNAME, ""));
+			json.put("password", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_PASS_SHA1, ""));
+			json.put("imdb_id", episodes.get(0).getShowId());
+			json.put("tvdb_id", episodes.get(0).getShowId());
+
+			JSONArray array = new JSONArray();
+			int count = episodes.size();
+			for (int i = 0; i < count; i++) {
+				JSONObject jsonShow = new JSONObject();
+				jsonShow.put("season", episodes.get(i).getSeason());
+				jsonShow.put("episode", episodes.get(i).getEpisode());
+				array.put(jsonShow);
+			}
+			json.put("episodes", array);
+
+			httppost.setEntity(new StringEntity(json.toString()));
+			ResponseHandler<String> responseHandler = new BasicResponseHandler();
+			httpclient.execute(httppost, responseHandler);
+
+			return true;
+		} catch (Exception e) {}
+
+		return false;
+	}
 	
+	/**
+	 * Get TV show details from Trakt.
+	 * @param context
+	 * @param id Either IMDb ID or TVDb ID.
+	 * @return A TraktShow object with the TV show data.
+	 */
+	public static TraktShow getShow(Context context, String id) {
+		TraktShow show = new TraktShow();
+
+		HttpClient httpclient = new DefaultHttpClient();	
+		HttpPost httppost = new HttpPost("http://api.trakt.tv/show/summary.json/" + Helper.TRAKT_API + "/" + id);
+		httppost.setHeader("Accept", "application/json");
+
+		try {
+			// Add authentication so Trakt returns user-specific data as well
+			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+			nameValuePairs.add(new BasicNameValuePair("username", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_USERNAME, "")));
+			nameValuePairs.add(new BasicNameValuePair("password", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_PASS_SHA1, "")));
+			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+			ResponseHandler<String> responseHandler = new BasicResponseHandler();
+			String json = httpclient.execute(httppost, responseHandler);
+
+			JSONObject jsonObject = new JSONObject(json);
+
+			// General TV show data
+			show.setTitle(jsonObject.getString("title"));
+			show.setYear(jsonObject.getString("year"));
+			show.setFirstAired(jsonObject.getLong("first_aired_utc"));
+			show.setUrl(jsonObject.getString("url"));
+			show.setRuntime(jsonObject.getInt("runtime"));
+			show.setContinuing(jsonObject.getString("status").equals("Continuing"));
+			show.setNetwork(jsonObject.getString("network"));
+			show.setAirDay(jsonObject.getString("air_day"));
+			show.setAirTime(jsonObject.getString("air_time"));
+			show.setOverview(jsonObject.getString("overview"));
+			show.setCertification(jsonObject.getString("certification"));
+			show.setId(jsonObject.getString("imdb_id"));
+			show.setTVDbId(jsonObject.getString("tvdb_id"));
+			show.setPoster(jsonObject.getJSONObject("images").getString("poster"));
+			show.setBackdrop(jsonObject.getJSONObject("images").getString("fanart"));
+
+			// Genres
+			StringBuilder genres = new StringBuilder();
+			JSONArray genreArray = jsonObject.getJSONArray("genres");
+			for (int i = 0; i < genreArray.length(); i++)
+				genres.append(genreArray.get(i) + ", ");
+			if (genreArray.length() > 0)
+				show.setGenres(genres.substring(0, genres.length() - 2));
+			else
+				show.setGenres("");
+
+			// Ratings
+			JSONObject ratings = jsonObject.getJSONObject("ratings");
+			show.setRatingsPercentage(ratings.getInt("percentage"));
+			show.setRatingsVotes(ratings.getInt("votes"));
+			show.setRatingsLoved(ratings.getInt("loved"));
+			show.setRatingsHated(ratings.getInt("hated"));
+
+			// User specific data
+			show.setRating(jsonObject.getString("rating"));
+			show.setAdvancedRating(jsonObject.getInt("rating_advanced"));
+			show.setInWatchlist(jsonObject.getBoolean("in_watchlist"));
+
+			// The TV show data has been loaded :-)
+			show.setHasLoaded(true);
+
+		} catch (Exception ignored) {}
+
+		return show;
+	}
+
+	/**
+	 * Get an array of TV show seasons for a given show.
+	 * @param showId
+	 * @return
+	 */
+	public static JSONArray getShowSeasons(String showId) {
+		JSONArray result = new JSONArray();
+
+		HttpClient httpclient = new DefaultHttpClient();	
+		HttpPost httppost = new HttpPost("http://api.trakt.tv/show/seasons.json/" + TRAKT_API + "/" + showId);
+		httppost.setHeader("Accept", "application/json");
+
+		try {
+			ResponseHandler<String> responseHandler = new BasicResponseHandler();
+			String json = httpclient.execute(httppost, responseHandler);
+
+			result = new JSONArray(json);
+		} catch (Exception e) {}
+
+		return result;
+	}
+
+	/**
+	 * Get an array of TV show episodes for a given show season.
+	 * @param showId
+	 * @return
+	 */
+	public static JSONArray getSeason(Context context, String showId, int season) {
+		JSONArray result = new JSONArray();
+
+		HttpClient httpclient = new DefaultHttpClient();	
+		HttpPost httppost = new HttpPost("http://api.trakt.tv/show/season.json/" + TRAKT_API + "/" + showId + "/" + season);
+		httppost.setHeader("Accept", "application/json");
+
+		try {
+			// Add authentication so Trakt returns user-specific data as well
+			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+			nameValuePairs.add(new BasicNameValuePair("username", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_USERNAME, "")));
+			nameValuePairs.add(new BasicNameValuePair("password", PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACCOUNT_PASS_SHA1, "")));
+			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+			ResponseHandler<String> responseHandler = new BasicResponseHandler();
+			String json = httpclient.execute(httppost, responseHandler);
+
+			result = new JSONArray(json);
+		} catch (Exception e) {}
+
+		return result;
+	}
+
+	/**
+	 * Get an array of actors for a given movie or TV show.
+	 * @param contentId
+	 * @param type
+	 * @return
+	 */
+	public static JSONArray getActors(String contentId, int type) {
+		JSONArray result = new JSONArray();
+
+		HttpClient httpclient = new DefaultHttpClient();	
+		HttpPost httppost = null;
+
+		if (type == MOVIES)
+			httppost = new HttpPost("http://api.trakt.tv/movie/summary.json/" + Helper.TRAKT_API + "/" + contentId);
+		else
+			httppost = new HttpPost("http://api.trakt.tv/show/summary.json/" + Helper.TRAKT_API + "/" + contentId);
+		httppost.setHeader("Accept", "application/json");
+
+		try {
+			ResponseHandler<String> responseHandler = new BasicResponseHandler();
+			String json = httpclient.execute(httppost, responseHandler);
+
+			JSONObject temp = new JSONObject(json);
+			result = temp.getJSONObject("people").getJSONArray("actors");
+		} catch (Exception e) {}
+
+		return result;
+	}
+
 	/**
 	 * Hash a String using SHA-1.
 	 * @param text

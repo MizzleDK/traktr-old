@@ -2,6 +2,7 @@
 
     <color name="accent">#4dbce9</color>
     <color name="background">#282828</color>
+    <color name="light_background">#f4f4f4</color>
     <color name="overlay_bg_color">#CC000000</color>
 
 </resources>

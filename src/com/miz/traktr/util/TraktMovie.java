@@ -2,7 +2,7 @@ package com.miz.traktr.util;
 
 public class TraktMovie extends TraktContent {
 
-	private String mTagline, mTmdbId;
+	private String mTagline, mTmdbId, mTrailer;
 	private long mReleased;
 	private boolean mHasWatched, mInCollection;
 	
@@ -45,5 +45,13 @@ public class TraktMovie extends TraktContent {
 	
 	public void setInCollection(boolean inCollection) {
 		mInCollection = inCollection;
+	}
+	
+	public String getTrailer() {
+		return mTrailer;
+	}
+
+	public void setTrailer(String trailer) {
+		mTrailer = trailer;
 	}
 }

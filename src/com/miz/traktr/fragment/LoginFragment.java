@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import com.miz.traktr.R;
 import com.miz.traktr.activity.Main;
+import com.miz.traktr.app.TraktrApplication;
 import com.miz.traktr.util.Helper;
 
 public class LoginFragment extends Fragment {
@@ -43,7 +44,7 @@ public class LoginFragment extends Fragment {
 
 		setRetainInstance(true);
 
-		mTypeface = Typeface.createFromAsset(getActivity().getAssets(), "RobotoCondensed-Regular.ttf");
+		mTypeface = TraktrApplication.getOrCreateTypeface(getActivity(), "RobotoCondensed-Regular.ttf");
 	}
 
 	@Override

@@ -12,7 +12,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <uses-feature
         android:name="android.hardware.touchscreen"
@@ -25,6 +25,7 @@
         android:xlargeScreens="true" />
 
     <application
+        android:name="com.miz.traktr.app.TraktrApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
@@ -64,7 +65,9 @@
         <!-- MovieDetails activity -->
         <activity
             android:name="com.miz.traktr.activity.MovieDetails"
+            android:configChanges="orientation|keyboardHidden"
             android:exported="false"
+            android:screenOrientation="portrait"
             android:theme="@style/AppThemeNoBackground"
             android:uiOptions="splitActionBarWhenNarrow" >
             <intent-filter>
@@ -75,8 +78,35 @@
         <!-- ShowDetails activity -->
         <activity
             android:name="com.miz.traktr.activity.ShowDetails"
+            android:configChanges="orientation|keyboardHidden"
             android:exported="false"
+            android:screenOrientation="portrait"
             android:theme="@style/AppThemeNoBackground" >
+            <intent-filter>
+                <action android:name="android.intent.action.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- ShowEpisodeDetails activity -->
+        <activity
+            android:name="com.miz.traktr.activity.ShowSeasonDetails"
+            android:configChanges="orientation|keyboardHidden"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme" >
+            <intent-filter>
+                <action android:name="android.intent.action.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- ShowEpisodeDetails activity -->
+        <activity
+            android:name="com.miz.traktr.activity.ShowEpisodeDetails"
+            android:configChanges="orientation|keyboardHidden"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppThemeDarkBackground"
+            android:uiOptions="splitActionBarWhenNarrow" >
             <intent-filter>
                 <action android:name="android.intent.action.DEFAULT" />
             </intent-filter>

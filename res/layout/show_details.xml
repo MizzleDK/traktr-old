@@ -99,18 +99,6 @@
                     android:src="@drawable/reverse_overlay_bg" />
 
                 <TextView
-                    android:id="@+id/tagline"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginRight="16dp"
-                    android:layout_marginTop="8dp"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textColor="#fff"
-                    android:textSize="20sp"
-                    android:textStyle="italic" />
-
-                <TextView
                     android:id="@+id/description"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -118,6 +106,20 @@
                     android:layout_marginLeft="16dp"
                     android:layout_marginRight="16dp"
                     android:layout_marginTop="8dp"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="#ddd" />
+
+                <TextView
+                    android:id="@+id/airs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:drawableLeft="@drawable/ic_action_tv"
+                    android:drawablePadding="8dp"
+                    android:focusable="false"
+                    android:gravity="center_vertical"
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     android:textColor="#ddd" />
 

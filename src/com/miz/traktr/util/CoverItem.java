@@ -14,7 +14,7 @@ import com.squareup.picasso.Target;
 public class CoverItem implements Target {
 
 	public TextView text, subtext;
-	public ImageView cover;
+	public ImageView cover, watched;
 	private static final int ANIMATION_DURATION = 200;
 
 	@Override

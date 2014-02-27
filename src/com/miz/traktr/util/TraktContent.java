@@ -2,7 +2,7 @@ package com.miz.traktr.util;
 
 public abstract class TraktContent {
 
-	private String mTitle, mId, mPoster, mBackdrop, mYear, mUrl, mTrailer, mOverview, mCertification, mGenres, mRating;
+	private String mTitle, mId, mPoster, mBackdrop, mYear, mUrl, mOverview, mCertification, mGenres, mRating;
 	private int mRuntime, mRatingsPercentage, mRatingsVotes, mRatingsLoved, mRatingsHated, mRatingAdvanced;
 	private boolean mHasLoaded, mInWatchlist;
 
@@ -52,14 +52,6 @@ public abstract class TraktContent {
 
 	public void setUrl(String url) {
 		mUrl = url;
-	}
-
-	public String getTrailer() {
-		return mTrailer;
-	}
-
-	public void setTrailer(String trailer) {
-		mTrailer = trailer;
 	}
 
 	public int getRuntime() {

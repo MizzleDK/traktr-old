@@ -1,16 +1,22 @@
 package com.miz.traktr.activity;
 
-import static com.miz.traktr.util.Helper.ALTERNATE;
-import static com.miz.traktr.util.Helper.BACKDROP;
 import static com.miz.traktr.util.Helper.CONTENT_ID;
-import static com.miz.traktr.util.Helper.INVALID;
-import static com.miz.traktr.util.Helper.POSTER;
+import static com.miz.traktr.util.Helper.NUMBER;
+import static com.miz.traktr.util.Helper.JSON;
+import static com.miz.traktr.util.Helper.SEASON;
 import static com.miz.traktr.util.Helper.TITLE;
-import static com.miz.traktr.util.Helper.YEAR;
-import static com.miz.traktr.util.Helper.TV_SHOWS;
+import static com.miz.traktr.util.Helper.TVDB_ID;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.ActionBar;
-import android.app.FragmentTransaction;
 import android.app.ActionBar.Tab;
+import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -19,14 +25,13 @@ import android.support.v4.view.ViewPager;
 import android.view.MenuItem;
 
 import com.miz.traktr.R;
-import com.miz.traktr.fragment.ActorsFragment;
-import com.miz.traktr.fragment.SeasonsFragment;
-import com.miz.traktr.fragment.ShowDetailsFragment;
+import com.miz.traktr.fragment.EpisodeDetailsFragment;
 
-public class ShowDetails extends BaseActivity implements ActionBar.TabListener {
+public class ShowEpisodeDetails extends BaseActivity implements ActionBar.TabListener {
 
-	private String mShowId, mTitle, mPoster, mBackdrop, mYear;
-	private int mTVDbId;
+	private List<JSONObject> mItems = new ArrayList<JSONObject>();
+	private String mShowId, mTitle, mJson;
+	private int mSeason, mIndex, mTVDbId;
 	private ViewPager mViewPager;
 	private ActionBar mActionBar;
 
@@ -40,10 +45,12 @@ public class ShowDetails extends BaseActivity implements ActionBar.TabListener {
 
 		mShowId = extras.getString(CONTENT_ID, "");
 		mTitle = extras.getString(TITLE, "");
-		mPoster = extras.getString(POSTER, INVALID);
-		mBackdrop = extras.getString(BACKDROP, INVALID);
-		mYear = extras.getString(YEAR, "");
-		mTVDbId = extras.getInt(ALTERNATE);
+		mJson = extras.getString(JSON);
+		mSeason = extras.getInt(SEASON);
+		mIndex = extras.getInt(NUMBER);
+		mTVDbId = extras.getInt(TVDB_ID);
+
+		loadJson();
 
 		mViewPager = (ViewPager) findViewById(R.id.viewpager);
 		mViewPager.setOffscreenPageLimit(2);
@@ -51,22 +58,29 @@ public class ShowDetails extends BaseActivity implements ActionBar.TabListener {
 		mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
 			@Override
 			public void onPageSelected(int position) {
-				getActionBar().selectTab(mActionBar.getTabAt(position));
+				mActionBar.selectTab(mActionBar.getTabAt(position));
 			}
 		});
 
 		mActionBar = getActionBar();
 		mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-		mActionBar.addTab(mActionBar.newTab().setText(R.string.overview).setTabListener(this));
-		mActionBar.addTab(mActionBar.newTab().setText(R.string.seasons).setTabListener(this));
-		mActionBar.addTab(mActionBar.newTab().setText(R.string.actors).setTabListener(this));
+		for (int i = 0; i < mItems.size(); i++)
+			try {
+				mActionBar.addTab(mActionBar.newTab().setText(String.format(getString(R.string.episode), mItems.get(i).getInt("episode"))).setTabListener(this));
+			} catch (JSONException ignored) {}
+
 
 		if (savedInstanceState != null) {
 			mViewPager.setCurrentItem(savedInstanceState.getInt("selection", 0));
 		}
 
 		setTitle(mTitle);
-		getActionBar().setSubtitle(mYear);
+		if (mSeason == 0)
+			getActionBar().setSubtitle(R.string.specials);
+		else
+			getActionBar().setSubtitle(String.format(getString(R.string.season), mSeason));
+		
+		mActionBar.selectTab(mActionBar.getTabAt(mIndex - 1)); // ActionBar index starts at 0
 	}
 
 	@Override
@@ -84,18 +98,14 @@ public class ShowDetails extends BaseActivity implements ActionBar.TabListener {
 		@Override  
 		public Fragment getItem(int index) {
 			switch (index) {
-			case 0:
-				return ShowDetailsFragment.newInstance(mShowId, mTitle, mPoster, mBackdrop, mYear);
-			case 1:
-				return SeasonsFragment.newInstance(mShowId, mTitle, mTVDbId);
 			default:
-				return ActorsFragment.newInstance(mShowId, TV_SHOWS);
+				return EpisodeDetailsFragment.newInstance(mItems.get(index).toString(), mShowId, mTVDbId);
 			}
 		}  
 
 		@Override  
 		public int getCount() {  
-			return 3;
+			return mItems.size();
 		}
 	}
 
@@ -125,5 +135,13 @@ public class ShowDetails extends BaseActivity implements ActionBar.TabListener {
 		default:
 			return super.onOptionsItemSelected(item);
 		}
+	}
+
+	private void loadJson() {
+		try {
+			JSONArray jArray = new JSONArray(mJson);
+			for (int i = 0; i < jArray.length(); i++)
+				mItems.add(jArray.getJSONObject(i));
+		} catch (JSONException ignored) {}
 	}
 }
