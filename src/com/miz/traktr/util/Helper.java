@@ -868,6 +868,7 @@ public class Helper {
 			httppost = new HttpPost("http://api.trakt.tv/movie/summary.json/" + Helper.TRAKT_API + "/" + contentId);
 		else
 			httppost = new HttpPost("http://api.trakt.tv/show/summary.json/" + Helper.TRAKT_API + "/" + contentId);
+		
 		httppost.setHeader("Accept", "application/json");
 
 		try {
